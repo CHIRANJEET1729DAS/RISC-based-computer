@@ -41,6 +41,7 @@ unordered_map<string, string> register_map = {
 };
 
 void line_generator(const string path){
+ ofstream output_file("/home/chiranjeet/Text File.txt"); 
  string line;
  ifstream file(path);
  if (file.is_open()){
@@ -52,22 +53,23 @@ void line_generator(const string path){
    string line = "";
    while(getline(str,split,' ')){
     string immediate;
-    if(split=="keep") immediate="10000000";
-    else if(split=="jump") immediate="10000001";
-    else if(split=="remove") immediate="10000010";
-    else if(split=="replace") immediate="10000011";
-    else if(split=="intialize") immediate="10000100";
-    else if(split=="add") immediate="10000101";
-    else if(split=="substract") immediate="10000110";
-    else if(split=="divide") immediate="10000111";
-    else if(split=="multiply") immediate="10001000";
-    else if(split=="right_shift") immediate="10001001";
-    else if(split=="left_shift") immediate="10001010";
-    else if(split=="move") immediate="10001011";
+    if(split=="keep") immediate="10000000010101010";
+    else if(split=="jump") immediate="10000001101010101";
+    else if(split=="remove") immediate="10000010011011011";
+    else if(split=="replace") immediate="10000011111111111";
+    else if(split=="intialize") immediate="10000100101101101";
+    else if(split=="add") immediate="10000101101111100";
+    else if(split=="substract") immediate="10000110111111110";
+    else if(split=="divide") immediate="10000111000000001";
+    else if(split=="multiply") immediate="10001000101111011";
+    else if(split=="right_shift") immediate="10001001011110110";
+    else if(split=="left_shift") immediate="10001010101110111";
+    else if(split=="move") immediate="10001011010101010";
     else if(register_map.find(split)!=register_map.end())immediate = register_map[split];
-    else immediate = "000000000";
-   line += immediate + " " ;
+    else immediate = "00000000000000000";
+   line += immediate ;
   }
+   output_file << line <<endl;
    cout<<"line number "<<count<<" :: "<<line<<endl;
   }
  }
