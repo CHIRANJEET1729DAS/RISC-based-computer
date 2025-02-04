@@ -19,16 +19,12 @@ endmodule
 
 module testbench;
   reg clk;
-
-  // Instantiate module
   read_instructions uut(.clk(clk));
-
-  // Clock generation
   always #5 clk = ~clk;
 
   initial begin
     clk = 0;
-    #200; // Run for 200 time units
+    #200; 
     $stop;
   end
 endmodule
