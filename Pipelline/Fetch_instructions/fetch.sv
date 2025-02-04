@@ -1,10 +1,10 @@
 module read_instructions(input wire clk);
-  reg [31:0] instructions [0:4];  // Array to store instructions (1024 words of 32-bit each)
+  reg [31:0] instructions [0:4]; 
   integer scanned;
 
   initial begin
-    scanned = 0;  // Initialize scanned index
-    $readmemb("/home/chiranjeet/Text File.txt", instructions); // Use a constant file path
+    scanned = 0;  
+    $readmemb("/home/chiranjeet/Text File.txt", instructions); 
   end
 
   always @(posedge clk) begin
