@@ -74,6 +74,110 @@ module shift_to_general(
     end
 endmodule
 
+module register_call(input wire clk , input wire[4:0] call_register, output reg[31:0] risc_register);
+    reg[31:0] register_collection[0:31]; //32 registers each with 32 bit width
+    always @(posedge clk)begin  
+      case (call_register)
+	    5'b00001 : begin
+		    risc_register <= register_collection[0];
+	    end
+            5'b00010 : begin
+                    risc_register <= register_collection[1];
+            end
+	    5'b00011 : begin
+                    risc_register <= register_collection[2];
+            end
+	    5'b00100 : begin
+                    risc_register <= register_collection[3];
+            end
+	    5'b00101 : begin
+                    risc_register <= register_collection[4];
+            end
+	    5'b00110 : begin
+                    risc_register <= register_collection[5];
+            end
+	    5'b00111 : begin
+		    risc_register <= register_collection[6];
+	    end
+            5'b01000 : begin
+		    risc_register <= register_collection[7];
+            end
+	    5'b01001 : begin
+		    risc_register <= register_collection[8];
+	    end
+	    5'b01010 : begin
+		    risc_register <= register_collection[9];
+	    end
+	    5'b01011 : begin
+                    risc_register <= register_collection[10];
+            end
+            5'b01100 : begin
+		    risc_register <= register_collection[11];
+	    end
+	    5'b01101 : begin
+		    risc_register <= register_collection[12];
+	    end
+	    5'b01110 : begin
+		    risc_register <= register_collection[13];
+	    end
+	    5'b01111 : begin
+		    risc_register <= register_collection[14];
+	    end
+	    5'b10000 : begin
+		    risc_register <= register_collection[15];
+	    end
+	    5'b10001 : begin
+		    risc_register <= register_collection[16];
+	    end
+            5'b10010 : begin
+		    risc_register <= register_collection[17];
+	    end
+ 	    5'b10011 : begin
+		    risc_register <= register_collection[18];
+	    end
+	    5'b10100 : begin
+		    risc_register <= register_collection[19];
+	    end
+	    5'b10101 : begin
+		    risc_register <= register_collection[20];
+	    end
+	    5'b10110 : begin
+		    risc_register <= register_collection[21];
+	    end
+	    5'b10111 : begin
+		    risc_register <= register_collection[22];
+	    end
+	    5'b11000 : begin
+		    risc_register <= register_collection[23];
+	    end
+	    5'b11001 : begin
+		    risc_register <= register_collection[24];
+	    end
+            5'b11010 : begin
+		    risc_register <= register_collection[25];
+	    end
+	    5'b11011 : begin
+		    risc_register <= register_collection[26];
+	    end
+	    5'b11100 : begin
+		    risc_register <= register_collection[27];
+	    end
+	    5'b11101 : begin
+		    risc_register <= register_collection[28];
+	    end
+	    5'b11110 : begin
+		    risc_register <= register_collection[29];
+	    end
+	    5'b11111 : begin
+		    risc_register <= register_collection[30];
+	    end
+	    5'b11001 : begin
+		    risc_register <= register_collection[31];
+        end
+     endcase
+   end
+endmodule
+
 module decode(
     input wire clk,
     input wire reset,
@@ -83,6 +187,7 @@ module decode(
     output reg [31:0] res_reg
 );
     wire [31:0] reg_out;  
+
     
    
     general_purpose_register regfile (
@@ -96,49 +201,68 @@ module decode(
 
     reg [31:0] ins_mem;
     reg [4:0] ins_value;
-    reg [31:0] temp_out_reg;  
+    wire [31:0] temp_out_wire;
+    reg [31:0] temp_out_reg; 
+    wire [31:0] temp_fill_wire;
+    wire [31:0] temp_fill_reg; 
+    reg [4:0] register_called;
+    reg [4:0]  register_to_fill;
+
+    
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+          temp_out_reg <= 32'b0;
+          register_called <= 5'b0;
+        end else begin
+          register_called <= reg_out[31:27]; // Extracting bits properly
+	  register_to_fill <= reg_out[26:22];
+       end
+    end
+
+    register_call regr (
+      .clk(clk),
+      .call_register(register_called),
+      .risc_register(temp_out_wire)
+    );
+    register_call regri (
+      .clk(clk),
+      .call_register(register_called),
+      .risc_register(temp_fill_wire)
+    );
+    
+    assign temp_out_wire = temp_out_reg;
+    assign temp_fill_wire = temp_fill_reg;
 
     always @(posedge clk) begin
-	temp_out_reg <= 32'b0;
 	ins_mem <= reg_out;
 //	$display("ins_mem[31:15] = %b", ins_mem[31:17]);
 	$display("ins_mem = %b" , ins_mem);
         case (ins_mem[31:15])
-            17'b10000000010101010: begin
-  //              program_counter <= ins_mem[31:27];
+            17'b10000000010101010: begin  //instruction_type  :: instruction , register_to_be_copied_from , register_to_replace_value_in
+                temp_out_reg <= temp_fill_reg;
+       	    end
+            17'b10000001101010101: begin  // instruction_type  :: instruction , null_reg , register_to_jump
+	//	ins_value <= ins_mem[26:22];
+                ins_mem  <= temp_out_reg;
+            end
+            17'b10000010011011011: begin  // instruction_type  :: instruction , null_reg , register_to_empty
+		temp_out_reg <= 32'b0;
+            end
+            17'b10000011111111111: begin  //instruction_type  :: instruction , value , register_to_initialise
                 ins_value <= ins_mem[26:22];
-                temp_out_reg = {27'b0,ins_value};  
+		temp_out_reg <= {27'b0,ins_value};
             end
-            17'b10000001101010101: begin
-  //              program_counter <= ins_mem[31:27];
-		ins_value <= ins_mem[26:22];
-                temp_out_reg = {27'b0,ins_value};  
-            end
-            17'b10000010011011011: begin
-  //              program_counter <= ins_mem[31:27];
-                ins_value <= 5'b0;
-                temp_out_reg = {27'b0,ins_value};  
-            end
-            17'b10000011111111111: begin
-  //              program_counter <= ins_mem[31:27];
-                ins_value <= ins_mem[26:22];
-	        temp_out_reg = {27'b0,ins_value};	
-            end
-            17'b10000100101101101: begin
-  //              program_counter <= ins_mem[31:27];
-		ins_value <= ins_mem[26:22];
-                temp_out_reg = {27'b0,ins_value};  
-            end
-            17'b10000101101111100: begin
-  //              program_counter <= ins_mem[31:27];
-                ins_value <= ins_mem[26:22] + ins_mem[21:17];
-                temp_out_reg = {27'b0,ins_value};  
+            17'b10000100101101101: begin //instruction_type  :: instruction , register ,register 
+		temp_out_reg <= temp_out_reg + temp_fill_reg;
+            end       
+            17'b10000101101111100: begin //instruction_type ::  instruction , value , register_to_initialise
+                ins_value <= ins_mem[26:22] ;
+		temp_out_reg <= {27'b0,ins_value};
 	    end
             17'b10001011010101010: begin
-  //              program_counter <= ins_mem[31:27];
                 ins_value <= ins_mem[26:22];
-                temp_out_reg = {27'b0,reg_out[ins_value]};  
-            end
+		temp_out_reg <= {27'b0,ins_value};
+	    end
             default: begin
                 temp_out_reg = reg_out;  
   //		$display("Used default case");
@@ -149,6 +273,8 @@ module decode(
 	$display("%b",res_reg);
     end
 endmodule
+
+
 
 module testbench;
     reg clk;
