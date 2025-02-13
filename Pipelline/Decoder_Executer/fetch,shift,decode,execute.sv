@@ -201,6 +201,7 @@ module decode(
 
     reg [31:0] ins_mem;
     reg [4:0] ins_value;
+    reg [4:0] ins_value_1;
     wire [31:0] temp_out_wire;
     reg [31:0] temp_out_reg; 
     wire [31:0] temp_fill_wire;
@@ -252,16 +253,43 @@ module decode(
                 ins_value <= ins_mem[26:22];
 		temp_out_reg <= {27'b0,ins_value};
             end
-            17'b10000100101101101: begin //instruction_type  :: instruction , register ,register 
+            17'b10000101101111100: begin //instruction_type  :: instruction , register ,register 
 		temp_out_reg <= temp_out_reg + temp_fill_reg;
             end       
             17'b10000101101111100: begin //instruction_type ::  instruction , value , register_to_initialise
                 ins_value <= ins_mem[26:22] ;
 		temp_out_reg <= {27'b0,ins_value};
 	    end
-            17'b10001011010101010: begin
+            17'b10001011010101010: begin //instruction_type :: instruction , value , value 
                 ins_value <= ins_mem[26:22];
-		temp_out_reg <= {27'b0,ins_value};
+                ins_value_1 <= ins_mem[21:17];
+		
+		if (ins_value >= ins_value_1) begin
+                   temp_out_reg <= {27'b0,ins_value- ins_value_1};
+		end
+		else begin 
+		   temp_out_reg <= {26'b0,ins_value- ins_value_1};
+		end
+	    end
+            17'b10000111000000001: begin //instruction_type :: instruction,value,value
+		ins_value <= ins_mem[26:22];
+                ins_value_1 <= ins_mem[21:17];
+
+		temp_out_reg <={27'b0,ins_value/ins_value_1};
+            end
+            17'b10001000101111011: begin //instruction_type :: instruction,value,value
+		ins_value <= ins_mem[26:22];
+                ins_value_1 <= ins_mem[21:17];
+
+                temp_out_reg <=ins_value*ins_value_1;
+            end
+	    17'b10001001011110110: begin //instruction_type :: instruction,null,value
+		ins_value <= ins_mem[26:22];
+		temp_out_reg <= {27'b0,ins_value<<1};
+	    end
+	    17'b10001010101110111: begin //instruction_type :: instruction,null,value
+		ins_value <= ins_mem[26:22];
+                temp_out_reg <= {27'b0,ins_value>>1};
 	    end
             default: begin
                 temp_out_reg = reg_out;  
