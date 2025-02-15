@@ -1,1 +1,1 @@
-# RISCV-architecture
+# RISC-architecture
